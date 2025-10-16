@@ -109,14 +109,57 @@ mkdir -p "$HOME/Library/Logs"
 cp "$RESOURCES_DIR/qbittorrent_mullvad_autobind.sh" "$HOME/Scripts/"
 chmod +x "$HOME/Scripts/qbittorrent_mullvad_autobind.sh"
 
-# Copy this entire app bundle to ~/Scripts for the LaunchAgent to reference
+# Create a background runner app that will be called by the LaunchAgent
+mkdir -p "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS"
+
+cat > "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/Info.plist" << 'RUNNER_INFO_EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>QBittorrentMullvadAutobindRunner</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.dharmesh.qbittorrent.mullvad.autobind.runner</string>
+    <key>CFBundleName</key>
+    <string>qBittorrent Mullvad Autobind</string>
+    <key>CFBundleDisplayName</key>
+    <string>qBittorrent Mullvad Autobind</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSUIElement</key>
+    <string>1</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2025 Dharmesh Tarapore. All rights reserved.</string>
+</dict>
+</plist>
+RUNNER_INFO_EOF
+
+cat > "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner" << 'RUNNER_EXEC_EOF'
+#!/bin/bash
+exec "$HOME/Scripts/qbittorrent_mullvad_autobind.sh"
+RUNNER_EXEC_EOF
+
+chmod +x "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner"
+
+# Sign the runner app
+RUNNER_SIGNING_ID=\$(security find-identity -v -p codesigning 2>/dev/null | grep "Apple Development" | head -n 1 | awk -F'"' '{print \$2}')
+if [ -n "\$RUNNER_SIGNING_ID" ]; then
+    codesign --force --deep --sign "\$RUNNER_SIGNING_ID" "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app" 2>/dev/null || true
+fi
+
+# Copy this entire installer app bundle to ~/Scripts for reference
 SELF_PATH="$(cd "$(dirname "$0")/../.." && pwd)/$(basename "$(dirname "$0")/../..")"
 if [ "$SELF_PATH" != "$HOME/Scripts/QBittorrentMullvadAutobind.app" ]; then
     cp -R "$SELF_PATH" "$HOME/Scripts/"
 fi
 
-# Create the LaunchAgent plist
-cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" << 'PLIST_EOF'
+# Create the LaunchAgent plist with the absolute path to the runner app
+cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" << PLIST_EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -125,9 +168,7 @@ cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plis
     <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/bash</string>
-        <string>-c</string>
-        <string>~/Scripts/qbittorrent_mullvad_autobind.sh</string>
+        <string>$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner</string>
     </array>
     <key>ProcessType</key>
     <string>Background</string>
