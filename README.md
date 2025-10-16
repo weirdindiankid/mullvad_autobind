@@ -23,7 +23,7 @@ Automatically binds qBittorrent to Mullvad VPN's network interface on macOS. Thi
 Clone this repo and run the installer:
 
 ```bash
-git clone https://github.com/yourusername/mullvad_autobind.git
+git clone https://github.com/weirdindiankid/mullvad_autobind.git
 cd mullvad_autobind
 ./install.sh
 ```
