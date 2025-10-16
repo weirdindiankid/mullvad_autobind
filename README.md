@@ -18,21 +18,28 @@ Automatically binds qBittorrent to Mullvad VPN's network interface on macOS. Thi
 
 ## Installation
 
-### Quick Install (Recommended)
+### One-Click Installation (Easiest)
 
-Clone this repo and run the installer:
+1. Download the latest release from [Releases](https://github.com/weirdindiankid/mullvad_autobind/releases)
+2. Unzip and double-click `QBittorrentMullvadAutobind.app`
+3. Click "Install" when prompted
+4. Done! The app will install everything and run the initial binding
+
+The signed .app bundle will:
+- Install the autobind script to `~/Scripts/`
+- Set up a background LaunchAgent
+- Run the initial interface binding
+- Show user-friendly installation dialogs
+
+### Command Line Installation
+
+For developers or advanced users:
 
 ```bash
 git clone https://github.com/weirdindiankid/mullvad_autobind.git
 cd mullvad_autobind
 ./install.sh
 ```
-
-The installer will:
-- Install the autobind script to `~/Scripts/`
-- Create a signed app bundle (if available in the repo)
-- Set up a LaunchAgent to run automatically on network changes
-- Run the binding script immediately for first-time setup
 
 After installation, the LaunchAgent will automatically detect Mullvad interface changes and update qBittorrent's binding as needed.
 
