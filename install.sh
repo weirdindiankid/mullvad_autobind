@@ -165,6 +165,20 @@ else
     exit 1
 fi
 
+# Run the autobind script immediately for first-time setup
+echo ""
+echo "Running initial interface binding..."
+if [ -f "$HOME/Scripts/qbittorrent_mullvad_autobind.sh" ]; then
+    if bash "$HOME/Scripts/qbittorrent_mullvad_autobind.sh"; then
+        echo -e "${GREEN}✓ Initial binding completed successfully${NC}"
+    else
+        echo -e "${YELLOW}⚠ Initial binding failed. This is normal if Mullvad VPN is not connected.${NC}"
+        echo -e "${YELLOW}  The script will run automatically when you connect to Mullvad.${NC}"
+    fi
+else
+    echo -e "${YELLOW}⚠ Could not find autobind script for initial run${NC}"
+fi
+
 echo ""
 echo -e "${GREEN}Installation complete!${NC}"
 echo ""
