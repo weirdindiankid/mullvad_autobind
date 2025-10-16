@@ -1,0 +1,4 @@
+#!/bin/bash
+# Get the path to the Resources folder
+RESOURCES_DIR="$(dirname "$0")/../Resources"
+exec "$RESOURCES_DIR/qbittorrent_mullvad_autobind.sh"

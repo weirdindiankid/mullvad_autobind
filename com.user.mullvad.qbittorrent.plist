@@ -3,13 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.user.mullvad.qbittorrent</string>
+    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/bin/sh</string>
-        <string>-c</string>
-        <string>bash ~/Scripts/qbittorrent_mullvad_autobind.sh</string>
+        <string>/Users/dharmesh/Scripts/QBittorrentMullvadAutobind.app/Contents/MacOS/QBittorrentMullvadAutobind</string>
     </array>
+    <key>ProcessType</key>
+    <string>Background</string>
     <key>RunAtLoad</key>
     <true/>
     <key>WatchPaths</key>
@@ -23,4 +23,3 @@
     <string>/tmp/qbittorrent_mullvad_output.log</string>
 </dict>
 </plist>
-
