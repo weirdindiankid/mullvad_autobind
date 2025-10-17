@@ -146,8 +146,11 @@ RUNNER_EXEC_EOF
 
 chmod +x "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner"
 
-# Sign the runner app
-RUNNER_SIGNING_ID=\$(security find-identity -v -p codesigning 2>/dev/null | grep "Apple Development" | head -n 1 | awk -F'"' '{print \$2}')
+# Sign the runner app (prefer Developer ID, fallback to Apple Development)
+RUNNER_SIGNING_ID=\$(security find-identity -v -p codesigning 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F'"' '{print \$2}')
+if [ -z "\$RUNNER_SIGNING_ID" ]; then
+    RUNNER_SIGNING_ID=\$(security find-identity -v -p codesigning 2>/dev/null | grep "Apple Development" | head -n 1 | awk -F'"' '{print \$2}')
+fi
 if [ -n "\$RUNNER_SIGNING_ID" ]; then
     codesign --force --deep --sign "\$RUNNER_SIGNING_ID" "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app" 2>/dev/null || true
 fi
@@ -221,7 +224,11 @@ echo -e "${GREEN}✓ Created app bundle${NC}"
 # Check for code signing identity
 echo ""
 echo "Checking for code signing identity..."
-SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Development" | head -n 1 | awk -F'"' '{print $2}')
+# Prefer Developer ID Application for distribution, fallback to Apple Development
+SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -n 1 | awk -F'"' '{print $2}')
+if [ -z "$SIGNING_IDENTITY" ]; then
+    SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Apple Development" | head -n 1 | awk -F'"' '{print $2}')
+fi
 
 if [ -n "$SIGNING_IDENTITY" ]; then
     echo "Found signing identity: $SIGNING_IDENTITY"
@@ -239,6 +246,18 @@ if [ -n "$SIGNING_IDENTITY" ]; then
 
         if [ $? -eq 0 ]; then
             echo -e "${GREEN}✓ Signature verified${NC}"
+        fi
+
+        # Check if this is a Developer ID certificate (required for notarization)
+        if echo "$SIGNING_IDENTITY" | grep -q "Developer ID Application"; then
+            echo ""
+            echo "Developer ID certificate detected. Preparing for notarization..."
+            echo -e "${YELLOW}Note: The app is signed but needs to be notarized by Apple to avoid warnings.${NC}"
+            echo "To notarize:"
+            echo "  1. Create an app-specific password at https://appleid.apple.com"
+            echo "  2. Run: xcrun notarytool submit $BUILD_DIR/QBittorrentMullvadAutobind-signed.zip --apple-id YOUR_APPLE_ID --password YOUR_APP_PASSWORD --team-id 7KGHU7S762 --wait"
+            echo "  3. After approval, staple: xcrun stapler staple $BUILD_DIR/QBittorrentMullvadAutobind.app"
+            echo "  4. Re-zip: cd $BUILD_DIR && zip -r QBittorrentMullvadAutobind-signed.zip QBittorrentMullvadAutobind.app"
         fi
     else
         echo -e "${RED}✗ Code signing failed${NC}"
