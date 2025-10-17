@@ -1,9 +1,10 @@
 # macOS
 .DS_Store
 
-# Build artifacts - keep only the distributable zip
+# Build artifacts - keep only distributables
 build/*
 !build/QBittorrentMullvadAutobind-signed.zip
+!build/QBittorrentMullvadAutobind.pkg
 
 # IDE
 .vscode/
