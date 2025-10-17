@@ -147,12 +147,12 @@ RUNNER_EXEC_EOF
 chmod +x "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner"
 
 # Sign the runner app (prefer Developer ID, fallback to Apple Development)
-RUNNER_SIGNING_ID=\$(security find-identity -v -p codesigning 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F'"' '{print \$2}')
-if [ -z "\$RUNNER_SIGNING_ID" ]; then
-    RUNNER_SIGNING_ID=\$(security find-identity -v -p codesigning 2>/dev/null | grep "Apple Development" | head -n 1 | awk -F'"' '{print \$2}')
+RUNNER_SIGNING_ID=$(security find-identity -v -p codesigning 2>/dev/null | grep "Developer ID Application" | head -n 1 | awk -F'"' '{print $2}')
+if [ -z "$RUNNER_SIGNING_ID" ]; then
+    RUNNER_SIGNING_ID=$(security find-identity -v -p codesigning 2>/dev/null | grep "Apple Development" | head -n 1 | awk -F'"' '{print $2}')
 fi
-if [ -n "\$RUNNER_SIGNING_ID" ]; then
-    codesign --force --deep --sign "\$RUNNER_SIGNING_ID" "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app" 2>/dev/null || true
+if [ -n "$RUNNER_SIGNING_ID" ]; then
+    codesign --force --deep --sign "$RUNNER_SIGNING_ID" "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app" 2>/dev/null || true
 fi
 
 # Copy this entire installer app bundle to ~/Scripts for reference
