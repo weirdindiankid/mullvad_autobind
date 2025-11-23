@@ -17,22 +17,35 @@ NC='\033[0m'
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BUILD_DIR="$SCRIPT_DIR/build"
 
+# Load credentials from .env file
+if [ ! -f "$SCRIPT_DIR/.env" ]; then
+    echo -e "${RED}Error: .env file not found${NC}"
+    echo "Please create a .env file with:"
+    echo "  APPLE_DEVELOPER_EMAIL=your@email.com"
+    echo "  APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx"
+    exit 1
+fi
+
+source "$SCRIPT_DIR/.env"
+
+if [ -z "$APPLE_DEVELOPER_EMAIL" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ]; then
+    echo -e "${RED}Error: Missing credentials in .env file${NC}"
+    echo "Please ensure .env contains APPLE_DEVELOPER_EMAIL and APPLE_APP_SPECIFIC_PASSWORD"
+    exit 1
+fi
+
 if [ ! -f "$BUILD_DIR/QBittorrentMullvadAutobind.pkg" ]; then
     echo -e "${RED}Error: Package not found. Run ./build_pkg.sh first.${NC}"
     exit 1
 fi
 
-read -p "Enter your Apple ID email: " APPLE_ID
-echo ""
-read -sp "Enter your app-specific password: " APP_PASSWORD
-echo ""
-
+echo "Using Apple ID: $APPLE_DEVELOPER_EMAIL"
 echo ""
 echo "Submitting package for notarization..."
 
 xcrun notarytool submit "$BUILD_DIR/QBittorrentMullvadAutobind.pkg" \
-    --apple-id "$APPLE_ID" \
-    --password "$APP_PASSWORD" \
+    --apple-id "$APPLE_DEVELOPER_EMAIL" \
+    --password "$APPLE_APP_SPECIFIC_PASSWORD" \
     --team-id "7KGHU7S762" \
     --wait
 

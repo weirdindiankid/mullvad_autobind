@@ -26,16 +26,90 @@ fi
 # Wait for VPN to establish connection
 sleep 3
 
-# Find the Mullvad interface
-# This typically looks for utun or tun interfaces that are up
-MULLVAD_INTERFACE=$(ifconfig | grep -B 1 "inet " | grep -v "inet6\|127.0.0.1" | grep -E "utun|tun" | head -n 1 | cut -d: -f1)
+# Find the Mullvad interface using multiple detection methods
+get_mullvad_interface() {
+  local interface=""
+
+  # Method 1: Use Mullvad CLI if available (most reliable)
+  if command -v mullvad &> /dev/null; then
+    log "Attempting to get interface from Mullvad CLI..."
+    local mullvad_status=$(mullvad status 2>/dev/null)
+
+    # Check if connected and extract interface
+    if echo "$mullvad_status" | grep -q "Connected"; then
+      # Try to get interface from status output
+      interface=$(echo "$mullvad_status" | grep -oE "(utun|tun|wg)[0-9]+" | head -n 1)
+
+      if [ -n "$interface" ]; then
+        log "Found interface from Mullvad CLI: $interface"
+        echo "$interface"
+        return 0
+      fi
+    else
+      log "Mullvad CLI reports not connected: $mullvad_status"
+    fi
+  fi
+
+  # Method 2: Check routing table for Mullvad's characteristic routes
+  log "Checking routing table for Mullvad interface..."
+  # Mullvad typically routes all traffic through its interface
+  interface=$(netstat -rn | grep -E "^0\.0\.0\.0|^default" | grep -oE "(utun|tun|wg)[0-9]+" | head -n 1)
+
+  if [ -n "$interface" ]; then
+    # Validate this interface has an active connection
+    if ifconfig "$interface" 2>/dev/null | grep -q "inet "; then
+      log "Found interface from routing table: $interface"
+      echo "$interface"
+      return 0
+    fi
+  fi
+
+  # Method 3: Look for utun/wg interfaces with private IP ranges (Mullvad uses 10.x.x.x)
+  log "Searching for active VPN interfaces with private IPs..."
+  for iface in $(ifconfig | grep -E "^(utun|tun|wg)[0-9]+" | cut -d: -f1); do
+    local ip=$(ifconfig "$iface" 2>/dev/null | grep "inet " | grep -v "127.0.0.1" | awk '{print $2}' | head -n 1)
+
+    if [ -n "$ip" ]; then
+      # Mullvad typically uses 10.x.x.x range
+      if echo "$ip" | grep -qE "^10\."; then
+        log "Found interface $iface with Mullvad-like IP: $ip"
+        echo "$iface"
+        return 0
+      fi
+    fi
+  done
+
+  # Method 4: Fallback to any active utun/wg interface (least reliable)
+  log "Falling back to first available utun/wg interface..."
+  interface=$(ifconfig | grep -B 1 "inet " | grep -v "inet6\|127.0.0.1" | grep -oE "^(utun|wg|tun)[0-9]+" | head -n 1)
+
+  if [ -n "$interface" ]; then
+    log "Found fallback interface: $interface (WARNING: not validated as Mullvad)"
+    echo "$interface"
+    return 0
+  fi
+
+  return 1
+}
+
+MULLVAD_INTERFACE=$(get_mullvad_interface)
 
 if [ -z "$MULLVAD_INTERFACE" ]; then
-  log "Could not find Mullvad interface. Exiting."
+  log "ERROR: Could not find Mullvad interface after trying all detection methods."
+  log "Please ensure Mullvad VPN is connected and check the log for details."
   exit 1
 fi
 
-log "Found Mullvad interface: $MULLVAD_INTERFACE"
+log "Successfully detected Mullvad interface: $MULLVAD_INTERFACE"
+
+# Validate the interface is actually up and has an IP
+if ! ifconfig "$MULLVAD_INTERFACE" 2>/dev/null | grep -q "inet "; then
+  log "ERROR: Interface $MULLVAD_INTERFACE exists but has no IP address. VPN may not be fully connected."
+  exit 1
+fi
+
+INTERFACE_IP=$(ifconfig "$MULLVAD_INTERFACE" | grep "inet " | awk '{print $2}' | head -n 1)
+log "Interface $MULLVAD_INTERFACE is active with IP: $INTERFACE_IP"
 
 # Check if qBittorrent config exists
 if [ ! -f "$QBITTORRENT_CONFIG" ]; then

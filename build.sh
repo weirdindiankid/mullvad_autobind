@@ -100,6 +100,24 @@ if [ $? -ne 0 ]; then
     exit 0
 fi
 
+# Show installation progress in background
+(
+    osascript <<EOD &
+display dialog "Installing qBittorrent Mullvad Autobind...
+
+Please wait while the installation completes.
+
+This may take up to 30 seconds." buttons {} giving up after 30 with title "Installing..." with icon note
+EOD
+) &
+PROGRESS_PID=$!
+
+# Function to close progress dialog
+close_progress() {
+    kill $PROGRESS_PID 2>/dev/null
+    osascript -e 'tell application "System Events" to keystroke return' 2>/dev/null
+}
+
 # Create necessary directories
 mkdir -p "$HOME/Scripts"
 mkdir -p "$HOME/Library/LaunchAgents"
@@ -211,6 +229,10 @@ Note: Initial binding may have failed because Mullvad VPN is not connected.
 
 The script will run automatically when you connect to Mullvad."
 fi
+
+# Close the progress dialog
+close_progress
+sleep 0.5
 
 osascript <<EOD
 display dialog "$STATUS" buttons {"OK"} default button "OK" with icon note with title "Installation Complete"
