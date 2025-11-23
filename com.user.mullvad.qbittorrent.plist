@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
+    <string>com.mullvad.qbittorrent.autobind</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/dharmesh/Scripts/QBittorrentMullvadAutobind.app/Contents/MacOS/QBittorrentMullvadAutobind</string>
+        <string>$HOME/Scripts/QBittorrentMullvadAutobind.app/Contents/MacOS/QBittorrentMullvadAutobind</string>
     </array>
     <key>ProcessType</key>
     <string>Background</string>

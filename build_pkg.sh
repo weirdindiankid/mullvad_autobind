@@ -44,7 +44,42 @@ mkdir -p "$PKG_ROOT/Library/LaunchAgents"
 cp "$SCRIPT_DIR/qbittorrent_mullvad_autobind.sh" "$PKG_ROOT/Library/Application Support/QBittorrentMullvadAutobind/"
 chmod +x "$PKG_ROOT/Library/Application Support/QBittorrentMullvadAutobind/qbittorrent_mullvad_autobind.sh"
 
-echo -e "${GREEN}✓ Created payload${NC}"
+echo -e "${GREEN}Created payload${NC}"
+
+# Create preinstall script to clean up old installations
+cat > "$SCRIPTS_DIR/preinstall" << 'PREINSTALL_EOF'
+#!/bin/bash
+
+# Get the user who invoked the installer
+CURRENT_USER="${USER}"
+if [ -z "$CURRENT_USER" ] || [ "$CURRENT_USER" = "root" ]; then
+    CURRENT_USER=$(stat -f "%Su" /dev/console)
+fi
+
+USER_HOME=$(eval echo "~$CURRENT_USER")
+
+# Unload and remove old LaunchAgents from previous versions
+OLD_LABELS=(
+    "com.dharmesh.qbittorrent.mullvad.autobind"
+    "com.user.mullvad.qbittorrent"
+)
+
+for OLD_LABEL in "${OLD_LABELS[@]}"; do
+    # Try to unload the agent
+    su - "$CURRENT_USER" -c "launchctl unload \"$USER_HOME/Library/LaunchAgents/$OLD_LABEL.plist\" 2>/dev/null" || true
+
+    # Remove the plist file
+    rm -f "$USER_HOME/Library/LaunchAgents/$OLD_LABEL.plist"
+done
+
+# Also unload the current version if it exists (for upgrades)
+su - "$CURRENT_USER" -c "launchctl unload \"$USER_HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist\" 2>/dev/null" || true
+
+exit 0
+PREINSTALL_EOF
+
+chmod +x "$SCRIPTS_DIR/preinstall"
+echo -e "${GREEN}Created preinstall script${NC}"
 
 # Create postinstall script that runs after package installation
 cat > "$SCRIPTS_DIR/postinstall" << 'POSTINSTALL_EOF'
@@ -77,7 +112,7 @@ cat > "$USER_HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/Info.pli
     <key>CFBundleExecutable</key>
     <string>QBittorrentMullvadAutobindRunner</string>
     <key>CFBundleIdentifier</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind.runner</string>
+    <string>com.mullvad.qbittorrent.autobind.runner</string>
     <key>CFBundleName</key>
     <string>qBittorrent Mullvad Autobind</string>
     <key>CFBundleDisplayName</key>
@@ -91,7 +126,7 @@ cat > "$USER_HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/Info.pli
     <key>LSUIElement</key>
     <string>1</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2025 Dharmesh Tarapore. All rights reserved.</string>
+    <string>Copyright © 2025. All rights reserved.</string>
 </dict>
 </plist>
 RUNNER_INFO_EOF
@@ -114,13 +149,13 @@ if [ -n "$SIGNING_ID" ]; then
 fi
 
 # Create LaunchAgent plist
-cat > "$USER_HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" << PLIST_EOF
+cat > "$USER_HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist" << PLIST_EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
+    <string>com.mullvad.qbittorrent.autobind</string>
     <key>ProgramArguments</key>
     <array>
         <string>$USER_HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner</string>
@@ -142,14 +177,27 @@ cat > "$USER_HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind
 </plist>
 PLIST_EOF
 
-chown "$CURRENT_USER" "$USER_HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist"
+chown "$CURRENT_USER" "$USER_HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist"
 
-# Unload old agents
-su - "$CURRENT_USER" -c "launchctl unload \"$USER_HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist\" 2>/dev/null" || true
-su - "$CURRENT_USER" -c "launchctl unload \"$USER_HOME/Library/LaunchAgents/com.user.mullvad.qbittorrent.plist\" 2>/dev/null" || true
+# Unload and remove old agents from previous versions
+OLD_PLISTS=(
+    "com.dharmesh.qbittorrent.mullvad.autobind.plist"
+    "com.user.mullvad.qbittorrent.plist"
+)
+
+for OLD_PLIST in "${OLD_PLISTS[@]}"; do
+    OLD_PLIST_PATH="$USER_HOME/Library/LaunchAgents/$OLD_PLIST"
+    if [ -f "$OLD_PLIST_PATH" ]; then
+        su - "$CURRENT_USER" -c "launchctl unload \"$OLD_PLIST_PATH\" 2>/dev/null" || true
+        rm -f "$OLD_PLIST_PATH"
+    fi
+done
+
+# Unload current plist if it's already loaded (in case of reinstall)
+su - "$CURRENT_USER" -c "launchctl unload \"$USER_HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist\" 2>/dev/null" || true
 
 # Load the new agent
-su - "$CURRENT_USER" -c "launchctl load \"$USER_HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist\""
+su - "$CURRENT_USER" -c "launchctl load \"$USER_HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist\""
 
 # Run initial binding
 su - "$CURRENT_USER" -c "\"$USER_HOME/Scripts/qbittorrent_mullvad_autobind.sh\"" 2>/dev/null || true
@@ -158,7 +206,7 @@ exit 0
 POSTINSTALL_EOF
 
 chmod +x "$SCRIPTS_DIR/postinstall"
-echo -e "${GREEN}✓ Created postinstall script${NC}"
+echo -e "${GREEN}Created postinstall script${NC}"
 
 # Build the package
 echo ""
@@ -166,7 +214,7 @@ echo "Building package..."
 
 pkgbuild --root "$PKG_ROOT" \
     --scripts "$SCRIPTS_DIR" \
-    --identifier "com.dharmesh.qbittorrent.mullvad.autobind" \
+    --identifier "com.mullvad.qbittorrent.autobind" \
     --version "1.0.5" \
     --install-location "/" \
     "$BUILD_DIR/QBittorrentMullvadAutobind-component.pkg"
@@ -176,7 +224,7 @@ cat > "$BUILD_DIR/distribution.xml" << 'DISTRIBUTION_EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <installer-gui-script minSpecVersion="1">
     <title>qBittorrent Mullvad Autobind</title>
-    <organization>com.dharmesh</organization>
+    <organization>com.mullvad</organization>
     <domains enable_localSystem="true"/>
     <options customize="never" require-scripts="true" rootVolumeOnly="true" />
     <welcome file="welcome.html" mime-type="text/html" />
@@ -185,14 +233,14 @@ cat > "$BUILD_DIR/distribution.xml" << 'DISTRIBUTION_EOF'
     <background file="background.png" mime-type="image/png" alignment="bottomleft" scaling="none"/>
     <choices-outline>
         <line choice="default">
-            <line choice="com.dharmesh.qbittorrent.mullvad.autobind"/>
+            <line choice="com.mullvad.qbittorrent.autobind"/>
         </line>
     </choices-outline>
     <choice id="default"/>
-    <choice id="com.dharmesh.qbittorrent.mullvad.autobind" visible="false">
-        <pkg-ref id="com.dharmesh.qbittorrent.mullvad.autobind"/>
+    <choice id="com.mullvad.qbittorrent.autobind" visible="false">
+        <pkg-ref id="com.mullvad.qbittorrent.autobind"/>
     </choice>
-    <pkg-ref id="com.dharmesh.qbittorrent.mullvad.autobind" version="1.0.5" onConclusion="none">QBittorrentMullvadAutobind-component.pkg</pkg-ref>
+    <pkg-ref id="com.mullvad.qbittorrent.autobind" version="1.0.5" onConclusion="none">QBittorrentMullvadAutobind-component.pkg</pkg-ref>
 </installer-gui-script>
 DISTRIBUTION_EOF
 
@@ -220,7 +268,9 @@ WELCOME_EOF
 
 # Create license text
 cat > "$BUILD_DIR/license.txt" << 'LICENSE_EOF'
-Copyright © 2025 Dharmesh Tarapore. All rights reserved.
+MIT License
+
+Copyright (c) 2025
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -262,7 +312,7 @@ productbuild --distribution "$BUILD_DIR/distribution.xml" \
     --resources "$BUILD_DIR" \
     "$BUILD_DIR/QBittorrentMullvadAutobind.pkg"
 
-echo -e "${GREEN}✓ Package created${NC}"
+echo -e "${GREEN}Package created${NC}"
 
 # Sign the package if Developer ID Installer certificate is available
 INSTALLER_CERT=$(security find-identity -v -p basic | grep "Developer ID Installer" | head -n 1 | awk -F'"' '{print $2}')
@@ -275,12 +325,12 @@ if [ -n "$INSTALLER_CERT" ]; then
         "$BUILD_DIR/QBittorrentMullvadAutobind-signed.pkg"
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ Package signed successfully${NC}"
+        echo -e "${GREEN}Package signed successfully${NC}"
         rm "$BUILD_DIR/QBittorrentMullvadAutobind.pkg"
         mv "$BUILD_DIR/QBittorrentMullvadAutobind-signed.pkg" "$BUILD_DIR/QBittorrentMullvadAutobind.pkg"
     fi
 else
-    echo -e "${YELLOW}⚠ No Developer ID Installer certificate found${NC}"
+    echo -e "${YELLOW}WARNING: No Developer ID Installer certificate found${NC}"
     echo "Package is unsigned - users will see a warning"
 fi
 

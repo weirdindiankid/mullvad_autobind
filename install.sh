@@ -2,7 +2,6 @@
 
 # Install script for qBittorrent Mullvad Autobind
 # This script sets up automatic binding of qBittorrent to Mullvad VPN interface on macOS
-# Created by Dharmesh Tarapore
 
 set -e
 
@@ -36,7 +35,7 @@ mkdir -p "$HOME/Library/Logs"
 if [ -d "$SCRIPT_DIR/build/QBittorrentMullvadAutobind.app" ]; then
     echo "Found pre-built signed app bundle, installing..."
     cp -R "$SCRIPT_DIR/build/QBittorrentMullvadAutobind.app" "$HOME/Scripts/"
-    echo -e "${GREEN}✓ Installed pre-built signed app bundle${NC}"
+    echo -e "${GREEN}Installed pre-built signed app bundle${NC}"
 
     # Also copy the script separately for manual testing
     if [ -f "$SCRIPT_DIR/qbittorrent_mullvad_autobind.sh" ]; then
@@ -52,7 +51,7 @@ else
     if [ -f "$SCRIPT_DIR/qbittorrent_mullvad_autobind.sh" ]; then
         cp "$SCRIPT_DIR/qbittorrent_mullvad_autobind.sh" "$HOME/Scripts/qbittorrent_mullvad_autobind.sh"
         chmod +x "$HOME/Scripts/qbittorrent_mullvad_autobind.sh"
-        echo -e "${GREEN}✓ Installed autobind script${NC}"
+        echo -e "${GREEN}Installed autobind script${NC}"
     else
         echo -e "${RED}Error: qbittorrent_mullvad_autobind.sh not found in $SCRIPT_DIR${NC}"
         exit 1
@@ -71,7 +70,7 @@ else
     <key>CFBundleExecutable</key>
     <string>QBittorrentMullvadAutobind</string>
     <key>CFBundleIdentifier</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
+    <string>com.mullvad.qbittorrent.autobind</string>
     <key>CFBundleName</key>
     <string>qBittorrent Mullvad Autobind</string>
     <key>CFBundleDisplayName</key>
@@ -85,7 +84,7 @@ else
     <key>LSUIElement</key>
     <true/>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2025 Dharmesh Tarapore. All rights reserved.</string>
+    <string>Copyright © 2025. All rights reserved.</string>
 </dict>
 </plist>
 INFO_PLIST_EOF
@@ -97,19 +96,19 @@ exec ~/Scripts/qbittorrent_mullvad_autobind.sh
 WRAPPER_EOF
 
     chmod +x "$HOME/Scripts/QBittorrentMullvadAutobind.app/Contents/MacOS/QBittorrentMullvadAutobind"
-    echo -e "${GREEN}✓ Created unsigned app bundle${NC}"
-    echo -e "${YELLOW}⚠ App will show as 'unidentified developer' in System Settings${NC}"
+    echo -e "${GREEN}Created unsigned app bundle${NC}"
+    echo -e "${YELLOW}WARNING: App will show as 'unidentified developer' in System Settings${NC}"
 fi
 
 # Create the Launch Agent plist
 echo "Creating Launch Agent..."
-cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" << PLIST_EOF
+cat > "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist" << PLIST_EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
+    <string>com.mullvad.qbittorrent.autobind</string>
     <key>ProgramArguments</key>
     <array>
         <string>$HOME/Scripts/QBittorrentMullvadAutobind.app/Contents/MacOS/QBittorrentMullvadAutobind</string>
@@ -131,7 +130,7 @@ cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plis
 </plist>
 PLIST_EOF
 
-echo -e "${GREEN}✓ Created Launch Agent plist${NC}"
+echo -e "${GREEN}Created Launch Agent plist${NC}"
 
 # Check if qBittorrent config exists
 if [ ! -f "$HOME/.config/qBittorrent/qBittorrent.ini" ]; then
@@ -148,20 +147,20 @@ if launchctl list | grep -q "com.user.mullvad.qbittorrent"; then
     rm -f "$HOME/Library/LaunchAgents/com.user.mullvad.qbittorrent.plist"
 fi
 
-if launchctl list | grep -q "com.dharmesh.qbittorrent.mullvad.autobind"; then
+if launchctl list | grep -q "com.mullvad.qbittorrent.autobind"; then
     echo "Unloading existing Launch Agent..."
-    launchctl unload "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" 2>/dev/null || true
+    launchctl unload "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist" 2>/dev/null || true
 fi
 
 # Load the launch agent
 echo "Loading Launch Agent..."
-launchctl load "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist"
+launchctl load "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist"
 
 # Verify it's loaded
-if launchctl list | grep -q "com.dharmesh.qbittorrent.mullvad.autobind"; then
-    echo -e "${GREEN}✓ Launch Agent loaded successfully${NC}"
+if launchctl list | grep -q "com.mullvad.qbittorrent.autobind"; then
+    echo -e "${GREEN}Launch Agent loaded successfully${NC}"
 else
-    echo -e "${RED}✗ Failed to load Launch Agent${NC}"
+    echo -e "${RED}Failed to load Launch Agent${NC}"
     exit 1
 fi
 
@@ -170,13 +169,13 @@ echo ""
 echo "Running initial interface binding..."
 if [ -f "$HOME/Scripts/qbittorrent_mullvad_autobind.sh" ]; then
     if bash "$HOME/Scripts/qbittorrent_mullvad_autobind.sh"; then
-        echo -e "${GREEN}✓ Initial binding completed successfully${NC}"
+        echo -e "${GREEN}Initial binding completed successfully${NC}"
     else
-        echo -e "${YELLOW}⚠ Initial binding failed. This is normal if Mullvad VPN is not connected.${NC}"
-        echo -e "${YELLOW}  The script will run automatically when you connect to Mullvad.${NC}"
+        echo -e "${YELLOW}WARNING: Initial binding failed. This is normal if Mullvad VPN is not connected.${NC}"
+        echo -e "${YELLOW}The script will run automatically when you connect to Mullvad.${NC}"
     fi
 else
-    echo -e "${YELLOW}⚠ Could not find autobind script for initial run${NC}"
+    echo -e "${YELLOW}WARNING: Could not find autobind script for initial run${NC}"
 fi
 
 echo ""
@@ -187,6 +186,6 @@ echo ""
 echo "Useful commands:"
 echo "  • Test manually: ~/Scripts/qbittorrent_mullvad_autobind.sh"
 echo "  • View logs: cat ~/Library/Logs/qbittorrent_mullvad_autobind.log"
-echo "  • Unload agent: launchctl unload ~/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist"
-echo "  • Reload agent: launchctl unload ~/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist && launchctl load ~/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist"
+echo "  • Unload agent: launchctl unload ~/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist"
+echo "  • Reload agent: launchctl unload ~/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist && launchctl load ~/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist"
 echo ""

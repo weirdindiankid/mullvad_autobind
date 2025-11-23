@@ -24,7 +24,7 @@ remove_file() {
 
     if [ -f "$file" ]; then
         rm -f "$file"
-        echo -e "${GREEN}✓ Removed $description${NC}"
+        echo -e "${GREEN}Removed $description${NC}"
         UNINSTALLED_SOMETHING=true
     fi
 }
@@ -36,7 +36,7 @@ remove_dir() {
 
     if [ -d "$dir" ]; then
         rm -rf "$dir"
-        echo -e "${GREEN}✓ Removed $description${NC}"
+        echo -e "${GREEN}Removed $description${NC}"
         UNINSTALLED_SOMETHING=true
     fi
 }
@@ -51,7 +51,7 @@ unload_agent() {
         echo "Stopping and unloading $description..."
         launchctl stop "$label" 2>/dev/null || true
         launchctl unload "$plist" 2>/dev/null || true
-        echo -e "${GREEN}✓ Unloaded $description${NC}"
+        echo -e "${GREEN}Unloaded $description${NC}"
         UNINSTALLED_SOMETHING=true
     fi
 }
@@ -68,11 +68,11 @@ remove_file "$HOME/Library/LaunchAgents/com.user.mullvad.qbittorrent.plist" \
     "old LaunchAgent plist"
 
 # Unload and remove current LaunchAgent
-unload_agent "com.dharmesh.qbittorrent.mullvad.autobind" \
-    "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" \
+unload_agent "com.mullvad.qbittorrent.autobind" \
+    "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist" \
     "LaunchAgent"
 
-remove_file "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" \
+remove_file "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist" \
     "LaunchAgent plist"
 
 # Remove the autobind script
@@ -92,7 +92,7 @@ for log in "$HOME/Library/Logs/qbittorrent_mullvad_autobind.log"* \
            "/tmp/qbittorrent_mullvad_output.log"; do
     if [ -f "$log" ]; then
         rm -f "$log"
-        echo -e "${GREEN}✓ Removed log file: $(basename "$log")${NC}"
+        echo -e "${GREEN}Removed log file: $(basename "$log")${NC}"
         LOG_FILES_FOUND=true
         UNINSTALLED_SOMETHING=true
     fi
@@ -113,7 +113,7 @@ for backup in "$HOME/.config/qBittorrent/qBittorrent.ini.bak"*; do
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             rm -f "$backup"
-            echo -e "${GREEN}✓ Removed backup file${NC}"
+            echo -e "${GREEN}Removed backup file${NC}"
             UNINSTALLED_SOMETHING=true
         fi
         BACKUP_FILES_FOUND=true

@@ -8,7 +8,7 @@ Automatically binds qBittorrent to Mullvad VPN's network interface on macOS. Thi
 - Runs as a LaunchAgent that triggers on network changes
 - Properly handles qBittorrent restarts to apply interface updates
 - Signed app bundle for proper macOS identification
-- Shows as "qBittorrent Mullvad Autobind" by Dharmesh Tarapore in System Settings
+- Shows as "qBittorrent Mullvad Autobind" in System Settings
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Automatically binds qBittorrent to Mullvad VPN's network interface on macOS. Thi
 
 ### One-Click Installation (Easiest)
 
-1. Download the latest release from [Releases](https://github.com/weirdindiankid/mullvad_autobind/releases)
+1. Download the latest release from the Releases page
 2. Unzip and double-click `QBittorrentMullvadAutobind.app`
 3. Click "Install" when prompted
 4. Done! The app will install everything and run the initial binding
@@ -36,7 +36,7 @@ The signed .app bundle will:
 For developers or advanced users:
 
 ```bash
-git clone https://github.com/weirdindiankid/mullvad_autobind.git
+git clone <repository-url>
 cd mullvad_autobind
 ./install.sh
 ```
@@ -105,6 +105,6 @@ launchctl list | grep mullvad
 If you need to reload the LaunchAgent:
 
 ```bash
-launchctl unload ~/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist
-launchctl load ~/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist
+launchctl unload ~/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist
+launchctl load ~/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist
 ```

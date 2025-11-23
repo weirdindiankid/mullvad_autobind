@@ -2,7 +2,6 @@
 
 # Build script for qBittorrent Mullvad Autobind
 # This script creates a signed, distributable app bundle
-# Created by Dharmesh Tarapore
 
 set -e
 
@@ -50,7 +49,7 @@ cat > "$BUILD_DIR/QBittorrentMullvadAutobind.app/Contents/Info.plist" << 'INFO_P
     <key>CFBundleExecutable</key>
     <string>QBittorrentMullvadAutobind</string>
     <key>CFBundleIdentifier</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
+    <string>com.mullvad.qbittorrent.autobind</string>
     <key>CFBundleName</key>
     <string>qBittorrent Mullvad Autobind</string>
     <key>CFBundleDisplayName</key>
@@ -62,7 +61,7 @@ cat > "$BUILD_DIR/QBittorrentMullvadAutobind.app/Contents/Info.plist" << 'INFO_P
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2025 Dharmesh Tarapore. All rights reserved.</string>
+    <string>Copyright © 2025. All rights reserved.</string>
 </dict>
 </plist>
 INFO_PLIST_EOF
@@ -138,7 +137,7 @@ cat > "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/Info.plist" <
     <key>CFBundleExecutable</key>
     <string>QBittorrentMullvadAutobindRunner</string>
     <key>CFBundleIdentifier</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind.runner</string>
+    <string>com.mullvad.qbittorrent.autobind.runner</string>
     <key>CFBundleName</key>
     <string>qBittorrent Mullvad Autobind</string>
     <key>CFBundleDisplayName</key>
@@ -152,7 +151,7 @@ cat > "$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/Info.plist" <
     <key>LSUIElement</key>
     <string>1</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2025 Dharmesh Tarapore. All rights reserved.</string>
+    <string>Copyright © 2025. All rights reserved.</string>
 </dict>
 </plist>
 RUNNER_INFO_EOF
@@ -186,7 +185,7 @@ cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plis
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.dharmesh.qbittorrent.mullvad.autobind</string>
+    <string>com.mullvad.qbittorrent.autobind</string>
     <key>ProgramArguments</key>
     <array>
         <string>$HOME/Scripts/QBittorrentMullvadAutobindRunner.app/Contents/MacOS/QBittorrentMullvadAutobindRunner</string>
@@ -209,11 +208,11 @@ cat > "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plis
 PLIST_EOF
 
 # Unload existing agent if present
-launchctl unload "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist" 2>/dev/null || true
+launchctl unload "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist" 2>/dev/null || true
 launchctl unload "$HOME/Library/LaunchAgents/com.user.mullvad.qbittorrent.plist" 2>/dev/null || true
 
 # Load the new agent
-launchctl load "$HOME/Library/LaunchAgents/com.dharmesh.qbittorrent.mullvad.autobind.plist"
+launchctl load "$HOME/Library/LaunchAgents/com.mullvad.qbittorrent.autobind.plist"
 
 # Run the script once to do initial binding
 if bash "$HOME/Scripts/qbittorrent_mullvad_autobind.sh" 2>/dev/null; then
@@ -241,7 +240,7 @@ WRAPPER_EOF
 
 chmod +x "$BUILD_DIR/QBittorrentMullvadAutobind.app/Contents/MacOS/QBittorrentMullvadAutobind"
 chmod +x "$BUILD_DIR/QBittorrentMullvadAutobind.app/Contents/Resources/qbittorrent_mullvad_autobind.sh"
-echo -e "${GREEN}✓ Created app bundle${NC}"
+echo -e "${GREEN}Created app bundle${NC}"
 
 # Check for code signing identity
 echo ""
@@ -259,7 +258,7 @@ if [ -n "$SIGNING_IDENTITY" ]; then
     codesign --force --deep --sign "$SIGNING_IDENTITY" "$BUILD_DIR/QBittorrentMullvadAutobind.app"
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ App bundle signed successfully${NC}"
+        echo -e "${GREEN}App bundle signed successfully${NC}"
 
         # Verify the signature
         echo ""
@@ -267,7 +266,7 @@ if [ -n "$SIGNING_IDENTITY" ]; then
         codesign -vvv --deep --strict "$BUILD_DIR/QBittorrentMullvadAutobind.app"
 
         if [ $? -eq 0 ]; then
-            echo -e "${GREEN}✓ Signature verified${NC}"
+            echo -e "${GREEN}Signature verified${NC}"
         fi
 
         # Check if this is a Developer ID certificate (required for notarization)
@@ -277,12 +276,12 @@ if [ -n "$SIGNING_IDENTITY" ]; then
             echo -e "${YELLOW}Note: The app is signed but needs to be notarized by Apple to avoid warnings.${NC}"
             echo "To notarize:"
             echo "  1. Create an app-specific password at https://appleid.apple.com"
-            echo "  2. Run: xcrun notarytool submit $BUILD_DIR/QBittorrentMullvadAutobind-signed.zip --apple-id YOUR_APPLE_ID --password YOUR_APP_PASSWORD --team-id 7KGHU7S762 --wait"
+            echo "  2. Run: xcrun notarytool submit $BUILD_DIR/QBittorrentMullvadAutobind-signed.zip --apple-id YOUR_APPLE_ID --password YOUR_APP_PASSWORD --team-id YOUR_TEAM_ID --wait"
             echo "  3. After approval, staple: xcrun stapler staple $BUILD_DIR/QBittorrentMullvadAutobind.app"
             echo "  4. Re-zip: cd $BUILD_DIR && zip -r QBittorrentMullvadAutobind-signed.zip QBittorrentMullvadAutobind.app"
         fi
     else
-        echo -e "${RED}✗ Code signing failed${NC}"
+        echo -e "${RED}Code signing failed${NC}"
         exit 1
     fi
 else
@@ -298,7 +297,7 @@ cd "$BUILD_DIR"
 zip -r "QBittorrentMullvadAutobind-signed.zip" QBittorrentMullvadAutobind.app
 cd - > /dev/null
 
-echo -e "${GREEN}✓ Created distributable package${NC}"
+echo -e "${GREEN}Created distributable package${NC}"
 
 echo ""
 echo -e "${GREEN}Build complete!${NC}"

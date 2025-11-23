@@ -23,14 +23,15 @@ if [ ! -f "$SCRIPT_DIR/.env" ]; then
     echo "Please create a .env file with:"
     echo "  APPLE_DEVELOPER_EMAIL=your@email.com"
     echo "  APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx"
+    echo "  APPLE_TEAM_ID=XXXXXXXXXX"
     exit 1
 fi
 
 source "$SCRIPT_DIR/.env"
 
-if [ -z "$APPLE_DEVELOPER_EMAIL" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ]; then
+if [ -z "$APPLE_DEVELOPER_EMAIL" ] || [ -z "$APPLE_APP_SPECIFIC_PASSWORD" ] || [ -z "$APPLE_TEAM_ID" ]; then
     echo -e "${RED}Error: Missing credentials in .env file${NC}"
-    echo "Please ensure .env contains APPLE_DEVELOPER_EMAIL and APPLE_APP_SPECIFIC_PASSWORD"
+    echo "Please ensure .env contains APPLE_DEVELOPER_EMAIL, APPLE_APP_SPECIFIC_PASSWORD, and APPLE_TEAM_ID"
     exit 1
 fi
 
@@ -46,23 +47,23 @@ echo "Submitting package for notarization..."
 xcrun notarytool submit "$BUILD_DIR/QBittorrentMullvadAutobind.pkg" \
     --apple-id "$APPLE_DEVELOPER_EMAIL" \
     --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-    --team-id "7KGHU7S762" \
+    --team-id "$APPLE_TEAM_ID" \
     --wait
 
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ Notarization successful!${NC}"
+    echo -e "${GREEN}Notarization successful!${NC}"
     echo ""
     echo "Stapling notarization ticket..."
 
     xcrun stapler staple "$BUILD_DIR/QBittorrentMullvadAutobind.pkg"
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ Complete!${NC}"
+        echo -e "${GREEN}Complete!${NC}"
         echo ""
         echo "The notarized package is ready:"
         echo "  $BUILD_DIR/QBittorrentMullvadAutobind.pkg"
     fi
 else
-    echo -e "${RED}✗ Notarization failed${NC}"
+    echo -e "${RED}Notarization failed${NC}"
     exit 1
 fi

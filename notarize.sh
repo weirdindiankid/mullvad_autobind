@@ -48,7 +48,7 @@ xcrun notarytool submit "$BUILD_DIR/QBittorrentMullvadAutobind-signed.zip" \
     --wait
 
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ Notarization successful!${NC}"
+    echo -e "${GREEN}Notarization successful!${NC}"
     echo ""
     echo "Stapling notarization ticket to app..."
 
@@ -60,22 +60,22 @@ if [ $? -eq 0 ]; then
     xcrun stapler staple QBittorrentMullvadAutobind.app
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}✓ Stapling successful!${NC}"
+        echo -e "${GREEN}Stapling successful!${NC}"
         echo ""
         echo "Re-creating signed zip with notarized app..."
         rm QBittorrentMullvadAutobind-signed.zip
         zip -r QBittorrentMullvadAutobind-signed.zip QBittorrentMullvadAutobind.app
 
-        echo -e "${GREEN}✓ Complete!${NC}"
+        echo -e "${GREEN}Complete!${NC}"
         echo ""
         echo "The notarized app is ready for distribution:"
         echo "  $BUILD_DIR/QBittorrentMullvadAutobind-signed.zip"
     else
-        echo -e "${RED}✗ Stapling failed${NC}"
+        echo -e "${RED}Stapling failed${NC}"
         exit 1
     fi
 else
-    echo -e "${RED}✗ Notarization failed${NC}"
+    echo -e "${RED}Notarization failed${NC}"
     echo "Check the error message above for details."
     exit 1
 fi
